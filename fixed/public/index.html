@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banco Protegido - Demo Local</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 80px 0;
+      }
+      .card {
+        transition: transform 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">Banco Protegido ✅</h1>
+        <p class="lead">Demo con mitigaciones CSRF implementadas</p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg"
+            >Ver mi cuenta</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card shadow-sm mb-4 border-success">
+            <div class="card-body">
+              <h5 class="card-title">✅ App Protegida</h5>
+              <p class="card-text">
+                Esta versión implementa
+                <strong>protecciones CSRF</strong> adecuadas.
+              </p>
+              <ul class="text-muted small">
+                <li>Tokens CSRF validados (<code>csurf</code>)</li>
+                <li>Cookie con <code>SameSite: lax</code></li>
+                <li>GET no cambia estado (405 en <code>/donar</code>)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title">🔬 Prueba las protecciones</h5>
+              <ol class="small">
+                <li>
+                  Inicia sesión como <code>ana</code> / <code>contrasena</code>
+                </li>
+                <li>Verifica tu saldo</li>
+                <li>
+                  Intenta el ataque desde:
+                  <a href="http://localhost:3001" target="_blank"
+                    >localhost:3001</a
+                  >
+                </li>
+                <li>Observa que el ataque <strong>falla</strong></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-success" role="alert">
+        <strong>✅ Seguro:</strong> Esta instancia demuestra cómo proteger una
+        aplicación web contra CSRF.
+      </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3">
+      <div class="container">
+        <small>Demo CSRF - Desarrollo Seguro 2025</small>
+      </div>
+    </footer>
+  </body>
+</html>

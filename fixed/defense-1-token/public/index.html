@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensa 1: Token Anti-CSRF</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 80px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">🔐 Defensa 1: Token Anti-CSRF</h1>
+        <p class="lead">La defensa clásica - El estándar de la industria</p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg">Ver cuenta</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">🔑 ¿Qué es?</h5>
+              <p class="card-text">
+                Un <strong>secreto compartido</strong> entre servidor y cliente
+                que el atacante no puede adivinar ni leer.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">⚙️ ¿Cómo funciona?</h5>
+              <ol class="small mb-0">
+                <li>Servidor genera token único</li>
+                <li>Cliente lo incluye en formularios</li>
+                <li>Servidor valida cada petición</li>
+                <li>Sin token válido = rechazo</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">✅ Usado por</h5>
+              <ul class="small mb-0">
+                <li><strong>Django</strong> (Python)</li>
+                <li><strong>Spring Security</strong> (Java)</li>
+                <li><strong>Laravel</strong> (PHP)</li>
+                <li><strong>Express CSURF</strong> (Node.js)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5>📊 Diagrama del flujo</h5>
+              <div class="bg-white p-3 border rounded">
+                <pre class="mb-0">
+1. Cliente solicita formulario → Servidor
+   ↓
+2. Servidor genera token único (ejemplo: "a7b3c9d2e5")
+   ↓
+3. Servidor envía HTML con token oculto:
+   &lt;input type="hidden" name="_csrf" value="a7b3c9d2e5" /&gt;
+   ↓
+4. Usuario llena formulario y envía
+   ↓
+5. Petición incluye: { monto: 100, destino: "Juan", _csrf: "a7b3c9d2e5" }
+   ↓
+6. Servidor valida: ¿El token coincide con la sesión?
+   ├─ ✅ SÍ → Procesa transferencia
+   └─ ❌ NO → Rechaza (403 Forbidden)
+
+<strong>🎯 ¿Por qué el atacante falla?</strong>
+- El atacante NO puede leer el token del sitio legítimo (Same-Origin Policy)
+- Sin token válido, el servidor rechaza automáticamente la petición
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-success mt-4">
+        <h6>✅ Ventajas</h6>
+        <ul class="mb-0">
+          <li>Estándar de la industria, ampliamente soportado</li>
+          <li>Funciona incluso con cookies sin SameSite</li>
+          <li>Compatible con navegadores antiguos</li>
+        </ul>
+      </div>
+
+      <div class="alert alert-warning mt-3">
+        <h6>⚠️ Consideraciones</h6>
+        <ul class="mb-0">
+          <li>Requiere código adicional en el servidor</li>
+          <li>Debe incluirse en todos los formularios POST</li>
+          <li>
+            Puede complicarse con AJAX/SPAs (solución: header personalizado)
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

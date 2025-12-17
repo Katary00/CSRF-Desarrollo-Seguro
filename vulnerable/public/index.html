@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banco Vulnerable - Demo Local</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 0;
+      }
+      .card {
+        transition: transform 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">Banco Vulnerable</h1>
+        <p class="lead">
+          Demo local educativo de Cross-Site Request Forgery (CSRF)
+        </p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg"
+            >Ver mi cuenta</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title">⚠️ App Vulnerable</h5>
+              <p class="card-text">
+                Esta aplicación es
+                <strong>intencionadamente vulnerable</strong> a CSRF para
+                propósitos educativos.
+              </p>
+              <ul class="text-muted small">
+                <li>Sin tokens CSRF</li>
+                <li>Cookie de sesión sin SameSite</li>
+                <li>GET que cambia estado (<code>/donar</code>)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title">📚 Cómo usar esta demo</h5>
+              <ol class="small">
+                <li>
+                  Inicia sesión como <code>ana</code> / <code>contrasena</code>
+                </li>
+                <li>Verifica tu saldo</li>
+                <li>
+                  Abre la página atacante en otra pestaña:
+                  <a href="http://localhost:3001" target="_blank"
+                    >localhost:3001</a
+                  >
+                </li>
+                <li>Observa cómo cambia tu saldo sin tu consentimiento</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-warning" role="alert">
+        <strong>Advertencia:</strong> Esta aplicación es solo para uso local y
+        educativo. No la despliegues en producción.
+      </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3">
+      <div class="container">
+        <small>Demo CSRF - Desarrollo Seguro 2025</small>
+      </div>
+    </footer>
+  </body>
+</html>

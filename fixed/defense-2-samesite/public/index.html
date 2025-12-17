@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensa 2: SameSite Cookies</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 80px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">🍪 Defensa 2: Cookies SameSite</h1>
+        <p class="lead">La solución moderna del navegador</p>
+        <div class="mt-4">
+          <a
+            href="http://localhost:3020"
+            class="btn btn-danger btn-lg me-2"
+            target="_blank"
+            >Strict (3020)</a
+          >
+          <a
+            href="http://localhost:3021"
+            class="btn btn-primary btn-lg me-2"
+            target="_blank"
+            >Lax (3021)</a
+          >
+          <a
+            href="http://localhost:3022"
+            class="btn btn-warning btn-lg"
+            target="_blank"
+            >None (3022)</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="alert alert-info">
+        <h5>🎯 Comparativa de los tres modos</h5>
+        <p class="mb-0">
+          Cada servidor corre en un puerto diferente para que puedas probar las
+          tres variantes.
+        </p>
+      </div>
+
+      <table class="table table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Modo</th>
+            <th>Puerto</th>
+            <th>Protección CSRF</th>
+            <th>Enlaces externos</th>
+            <th>Formularios externos</th>
+            <th>Uso ideal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="table-danger">
+            <td><strong>Strict</strong></td>
+            <td><a href="http://localhost:3020" target="_blank">3020</a></td>
+            <td>✅ Máxima</td>
+            <td>❌ No funcionan con sesión</td>
+            <td>❌ Bloqueados</td>
+            <td>Bancos, apps críticas</td>
+          </tr>
+          <tr class="table-primary">
+            <td><strong>Lax</strong> ⭐</td>
+            <td><a href="http://localhost:3021" target="_blank">3021</a></td>
+            <td>✅ Alta</td>
+            <td>✅ Funcionan</td>
+            <td>❌ Bloqueados</td>
+            <td><strong>Recomendado para la mayoría</strong></td>
+          </tr>
+          <tr class="table-warning">
+            <td><strong>None</strong></td>
+            <td><a href="http://localhost:3022" target="_blank">3022</a></td>
+            <td>❌ Ninguna</td>
+            <td>✅ Funcionan</td>
+            <td>⚠️ Permitidos</td>
+            <td>Widgets, SSO (+ token CSRF)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-body">
+              <h5>📊 Cómo funciona SameSite</h5>
+              <pre class="bg-light p-3 rounded">
+<strong>Escenario:</strong> Usuario en localhost:3001 (atacante) intenta enviar petición a localhost:3020 (banco)
+
+<strong>1. SameSite=Strict:</strong>
+   Navegador: "Esta petición viene de otro sitio (3001 → 3020)"
+   Navegador: "Cookie configurada con SameSite=Strict"
+   Navegador: ❌ "NO enviaré la cookie en NINGUNA petición cross-site"
+   Resultado: Servidor no reconoce al usuario → Ataque fallido ✅
+
+<strong>2. SameSite=Lax:</strong>
+   Si es GET (enlace): ✅ Envía cookie
+   Si es POST (formulario): ❌ NO envía cookie
+   Resultado: Ataques POST bloqueados, navegación normal funciona ✅
+
+<strong>3. SameSite=None:</strong>
+   Navegador: ✅ "Enviaré la cookie en TODAS las peticiones"
+   Resultado: Ataque tiene éxito ❌ (por eso requiere protección adicional)
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">✅ Ventajas de SameSite</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>Una sola línea de código</strong> en configuración
+                </li>
+                <li><strong>Protección a nivel de navegador</strong></li>
+                <li><strong>No requiere cambios en HTML</strong></li>
+                <li>
+                  <strong>Lax es el estándar actual</strong> (Chrome, Firefox)
+                </li>
+                <li><strong>Compatible con navegadores modernos</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-warning">
+              <h6 class="mb-0">⚠️ Consideraciones</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>Strict:</strong> Puede afectar UX (enlaces externos)
+                </li>
+                <li><strong>None requiere HTTPS</strong> (secure=true)</li>
+                <li><strong>Navegadores antiguos</strong> no lo soportan</li>
+                <li>
+                  <strong>Mejor combinado con tokens</strong> para defensa en
+                  profundidad
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-primary mt-4">
+        <h6>💡 Recomendación para tu presentación:</h6>
+        <ol class="mb-0">
+          <li>
+            Demuestra primero <strong>Lax</strong> (lo más común y práctico)
+          </li>
+          <li>Muestra <strong>Strict</strong> para apps de alta seguridad</li>
+          <li>
+            Explica <strong>None</strong> como contraejemplo (qué NO hacer sin
+            protección adicional)
+          </li>
+          <li>
+            <strong>Menciona:</strong> "Lax es el valor por defecto en Chrome
+            desde 2020"
+          </li>
+        </ol>
+      </div>
+    </div>
+  </body>
+</html>

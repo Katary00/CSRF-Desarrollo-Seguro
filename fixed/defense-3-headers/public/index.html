@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensa 3: Verificación de Cabeceras</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: white;
+        padding: 80px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">
+          📧 Defensa 3: Verificación de Cabeceras
+        </h1>
+        <p class="lead">La defensa más intuitiva - Verificar el remitente</p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg">Ver cuenta</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">📨 ¿Qué es?</h5>
+              <p class="card-text">
+                El servidor verifica las <strong>cabeceras HTTP</strong> para
+                asegurar que la petición proviene del
+                <strong>mismo dominio</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">⚙️ ¿Cómo funciona?</h5>
+              <ol class="small mb-0">
+                <li>
+                  Navegador envía <code>Origin</code> o <code>Referer</code>
+                </li>
+                <li>Servidor compara con lista blanca</li>
+                <li>Si coincide → Procesa petición</li>
+                <li>Si no coincide → Rechaza (403)</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">🎯 Analogía</h5>
+              <p class="small mb-0">
+                Como un banco que verifica el
+                <strong>remitente del sobre</strong>
+                antes de procesar una orden. Si viene de una dirección
+                desconocida, la rechaza automáticamente.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <h5 class="mb-0">📊 Cabeceras HTTP explicadas</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>🔵 Origin</h6>
+                  <p class="small">
+                    <strong>Qué es:</strong> Cabecera que indica el origen de la
+                    petición
+                  </p>
+                  <p class="small">
+                    <strong>Formato:</strong> <code>http://localhost:3030</code>
+                  </p>
+                  <p class="small">
+                    <strong>Cuándo se envía:</strong> En peticiones cross-origin
+                    (AJAX, formularios cross-site)
+                  </p>
+                  <p class="small">
+                    <strong>Ventaja:</strong> Más confiable, no puede ser
+                    manipulada fácilmente
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <h6>🔵 Referer</h6>
+                  <p class="small">
+                    <strong>Qué es:</strong> URL completa de la página que hizo
+                    la petición
+                  </p>
+                  <p class="small">
+                    <strong>Formato:</strong>
+                    <code>http://localhost:3030/cuenta</code>
+                  </p>
+                  <p class="small">
+                    <strong>Cuándo se envía:</strong> En la mayoría de
+                    peticiones
+                  </p>
+                  <p class="small">
+                    <strong>Desventaja:</strong> Puede ser bloqueada por
+                    políticas de privacidad
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5>📋 Flujo de validación</h5>
+              <pre class="mb-0">
+<strong>Escenario 1: Petición legítima</strong>
+1. Usuario hace clic en "Transferir" en localhost:3030/cuenta
+2. Navegador envía POST con:
+   Origin: http://localhost:3030 ✅
+   Referer: http://localhost:3030/cuenta ✅
+3. Servidor valida: "Origin coincide con mi dominio"
+4. ✅ Procesa la transferencia
+
+<strong>Escenario 2: Ataque CSRF</strong>
+1. Usuario visita sitio malicioso en localhost:3001
+2. Sitio malicioso envía formulario POST a localhost:3030
+3. Navegador envía POST con:
+   Origin: http://localhost:3001 ❌
+   Referer: http://localhost:3001/ ❌
+4. Servidor valida: "Origin NO coincide con mi dominio"
+5. ❌ Rechaza con 403 Forbidden
+6. 🎉 Ataque bloqueado
+
+<strong>Por qué funciona:</strong>
+El atacante NO puede falsificar las cabeceras Origin/Referer.
+Son añadidas automáticamente por el navegador y no pueden ser modificadas por JavaScript.
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">✅ Ventajas</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li><strong>Muy intuitivo</strong> de entender y explicar</li>
+                <li><strong>No requiere cambios en HTML</strong></li>
+                <li><strong>Funciona con AJAX</strong> sin modificaciones</li>
+                <li>
+                  <strong>Protección centralizada</strong> en un middleware
+                </li>
+                <li><strong>Compatible con navegadores antiguos</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-warning">
+              <h6 class="mb-0">⚠️ Consideraciones</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>Referer puede ser bloqueado</strong> por
+                  configuraciones de privacidad
+                </li>
+                <li>
+                  <strong>Origin no se envía</strong> en peticiones same-origin
+                  antiguas
+                </li>
+                <li><strong>Requiere lista blanca</strong> bien mantenida</li>
+                <li>
+                  <strong>No protege contra subdominios</strong> comprometidos
+                </li>
+                <li><strong>Mejor combinado</strong> con otras defensas</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info mt-4">
+        <h6>💡 Ejemplo de código (Node.js/Express):</h6>
+        <pre
+          class="bg-white p-3 rounded mb-0"
+        ><code>function validarOrigenPeticion(req, res, next) {
+  const origin = req.get("Origin");
+  const origenesPermitidos = ["http://localhost:3030"];
+  
+  if (origin && !origenesPermitidos.includes(origin)) {
+    return res.status(403).send("Origen no autorizado");
+  }
+  
+  next();
+}
+
+app.post("/transferencia", validarOrigenPeticion, (req, res) => {
+  // Código de la transferencia...
+});</code></pre>
+      </div>
+
+      <div class="alert alert-primary mt-3">
+        <h6>🎓 Para tu presentación:</h6>
+        <ul class="mb-0">
+          <li>
+            Usa la <strong>analogía del sobre</strong>: El banco verifica el
+            remitente antes de procesar
+          </li>
+          <li>
+            Muestra las <strong>cabeceras en DevTools</strong> (pestaña Network)
+          </li>
+          <li>
+            Explica que el navegador añade estas cabeceras
+            <strong>automáticamente</strong>
+          </li>
+          <li>Demuestra el rechazo con un mensaje 403 claro</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

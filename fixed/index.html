@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensas Contra CSRF - Inicio</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 60px 0;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        transition: transform 0.2s;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      }
+      .badge-port {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-3 fw-bold">🛡️ Las 3 Defensas Contra CSRF</h1>
+        <p class="lead mt-3">
+          Demos educativos interactivos de las principales protecciones contra
+          Cross-Site Request Forgery
+        </p>
+        <p class="mt-2">
+          <small>Desarrollo Seguro 2025 - Demo Local</small>
+        </p>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="alert alert-info">
+        <h5>🎓 Guía para tu presentación</h5>
+        <p class="mb-0">
+          Ejecuta cada defensa con <code>npm run defense:[nombre]</code> y
+          visita la URL correspondiente. Cada demo incluye documentación
+          completa e interactiva.
+        </p>
+      </div>
+
+      <div class="row mb-5">
+        <div class="col-md-12">
+          <h3 class="mb-4">📍 Navegación Rápida</h3>
+        </div>
+
+        <!-- Defensa 1: Token CSRF -->
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-success text-white">
+              <h5 class="mb-0">🔐 Defensa 1: Token Anti-CSRF</h5>
+            </div>
+            <div class="card-body">
+              <p class="card-text">
+                <strong>La defensa clásica</strong> - El estándar de la
+                industria
+              </p>
+              <ul class="small">
+                <li>Tokens únicos por sesión</li>
+                <li>Secreto compartido</li>
+                <li>Usado por frameworks populares</li>
+              </ul>
+              <div class="mt-3">
+                <span class="badge bg-success badge-port">Puerto 3010</span>
+              </div>
+              <hr />
+              <p class="small mb-2">
+                <strong>Ejecutar:</strong>
+              </p>
+              <code class="small">npm run defense:token</code>
+              <div class="mt-3">
+                <a
+                  href="http://localhost:3010"
+                  class="btn btn-success btn-sm"
+                  target="_blank"
+                  >Abrir Demo →</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Defensa 2: SameSite -->
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">🍪 Defensa 2: Cookies SameSite</h5>
+            </div>
+            <div class="card-body">
+              <p class="card-text">
+                <strong>La defensa moderna</strong> - Protección del navegador
+              </p>
+              <p class="small mb-2"><strong>3 variantes:</strong></p>
+              <ul class="small">
+                <li><strong>Strict:</strong> Bloqueo total (3020)</li>
+                <li><strong>Lax:</strong> Inteligente ⭐ (3021)</li>
+                <li><strong>None:</strong> Sin protección (3022)</li>
+              </ul>
+              <div class="mt-3">
+                <span class="badge bg-danger badge-port me-1">3020</span>
+                <span class="badge bg-primary badge-port me-1">3021 ⭐</span>
+                <span class="badge bg-warning text-dark badge-port">3022</span>
+              </div>
+              <hr />
+              <p class="small mb-2">
+                <strong>Ejecutar (Lax recomendado):</strong>
+              </p>
+              <code class="small">npm run defense:lax</code>
+              <div class="mt-3">
+                <a
+                  href="http://localhost:3021"
+                  class="btn btn-primary btn-sm me-2"
+                  target="_blank"
+                  >Ver Comparativa →</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Defensa 3: Headers -->
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-info text-white">
+              <h5 class="mb-0">📧 Defensa 3: Verificación Headers</h5>
+            </div>
+            <div class="card-body">
+              <p class="card-text">
+                <strong>La defensa intuitiva</strong> - Verificar el remitente
+              </p>
+              <ul class="small">
+                <li>Valida Origin y Referer</li>
+                <li>Lista blanca de dominios</li>
+                <li>Fácil de entender y explicar</li>
+              </ul>
+              <div class="mt-3">
+                <span class="badge bg-info badge-port">Puerto 3030</span>
+              </div>
+              <hr />
+              <p class="small mb-2">
+                <strong>Ejecutar:</strong>
+              </p>
+              <code class="small">npm run defense:headers</code>
+              <div class="mt-3">
+                <a
+                  href="http://localhost:3030"
+                  class="btn btn-info btn-sm"
+                  target="_blank"
+                  >Abrir Demo →</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparativa -->
+      <div class="row">
+        <div class="col-md-12">
+          <h3 class="mb-4">📊 Tabla Comparativa</h3>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Defensa</th>
+                  <th>Puerto</th>
+                  <th>Complejidad</th>
+                  <th>Impacto UX</th>
+                  <th>Compatibilidad</th>
+                  <th>Mejor para...</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>🔐 Token CSRF</strong></td>
+                  <td>3010</td>
+                  <td>Media</td>
+                  <td>Bajo</td>
+                  <td>✅ Universal</td>
+                  <td>Estándar de la industria</td>
+                </tr>
+                <tr class="table-success">
+                  <td><strong>🍪 SameSite=Lax</strong> ⭐</td>
+                  <td>3021</td>
+                  <td>Muy baja</td>
+                  <td>Ninguno</td>
+                  <td>✅ Moderna</td>
+                  <td><strong>Mayoría de apps web</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>🔒 SameSite=Strict</strong></td>
+                  <td>3020</td>
+                  <td>Muy baja</td>
+                  <td>Medio</td>
+                  <td>✅ Moderna</td>
+                  <td>Apps de alta seguridad</td>
+                </tr>
+                <tr class="table-warning">
+                  <td><strong>⚠️ SameSite=None</strong></td>
+                  <td>3022</td>
+                  <td>Muy baja</td>
+                  <td>Ninguno</td>
+                  <td>⚠️ Requiere HTTPS</td>
+                  <td>Widgets/SSO (+ tokens)</td>
+                </tr>
+                <tr>
+                  <td><strong>📧 Origin/Referer</strong></td>
+                  <td>3030</td>
+                  <td>Baja</td>
+                  <td>Ninguno</td>
+                  <td>✅ Universal</td>
+                  <td>Validación complementaria</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Demo del Ataque -->
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+              <h5 class="mb-0">💀 Demostración del Ataque CSRF</h5>
+            </div>
+            <div class="card-body">
+              <p>
+                <strong>Para demostrar cómo funciona el ataque,</strong> ejecuta
+                estas dos aplicaciones:
+              </p>
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>🔴 Aplicación Vulnerable (Puerto 3000)</h6>
+                  <code>npm run start:vulnerable</code>
+                  <p class="small mt-2">
+                    <a href="http://localhost:3000" target="_blank"
+                      >http://localhost:3000</a
+                    >
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <h6>💀 Sitio Atacante (Puerto 3001)</h6>
+                  <code>npm run start:attacker</code>
+                  <p class="small mt-2">
+                    <a href="http://localhost:3001" target="_blank"
+                      >http://localhost:3001</a
+                    >
+                  </p>
+                </div>
+              </div>
+              <hr />
+              <p class="small mb-0">
+                <strong>Flujo:</strong> Inicia sesión en 3000 → Visita 3001 →
+                Observa cómo tu saldo disminuye sin tu consentimiento
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recomendaciones -->
+      <div class="row mt-5">
+        <div class="col-md-6">
+          <div class="card bg-light h-100">
+            <div class="card-body">
+              <h5>💡 Mejor Práctica</h5>
+              <p class="mb-0">
+                Combinar <strong>SameSite=Lax + Tokens CSRF</strong> ofrece
+                defensa en profundidad:
+              </p>
+              <ul class="mt-2">
+                <li>SameSite protege la mayoría de casos (una línea)</li>
+                <li>Tokens protegen navegadores antiguos</li>
+                <li>Dos capas = Máxima seguridad</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card bg-light h-100">
+            <div class="card-body">
+              <h5>🎓 Orden para Presentación</h5>
+              <ol class="mb-0">
+                <li>Explica qué es CSRF (5 min)</li>
+                <li>Demuestra el ataque en vivo (10 min)</li>
+                <li><strong>Token CSRF</strong> - La clásica (5 min)</li>
+                <li><strong>SameSite=Lax</strong> - La moderna ⭐ (5 min)</li>
+                <li><strong>Headers</strong> - La intuitiva (5 min)</li>
+                <li>Conclusiones y mejor práctica (5 min)</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analogías -->
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="alert alert-primary">
+            <h6>🗝️ Analogías útiles para tu presentación:</h6>
+            <div class="row">
+              <div class="col-md-4">
+                <p class="mb-0">
+                  <strong>Token CSRF:</strong> Como una llave secreta que solo
+                  tú y el banco conocen
+                </p>
+              </div>
+              <div class="col-md-4">
+                <p class="mb-0">
+                  <strong>SameSite:</strong> Un guardián del navegador que
+                  decide cuándo enviar credenciales
+                </p>
+              </div>
+              <div class="col-md-4">
+                <p class="mb-0">
+                  <strong>Headers:</strong> Verificar el remitente del sobre
+                  antes de procesar
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credenciales -->
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="alert alert-secondary">
+            <h6>🔑 Credenciales de Prueba</h6>
+            <p class="mb-0">
+              Todas las demos usan: <strong>Usuario:</strong> <code>ana</code> |
+              <strong>Contraseña:</strong> <code>contrasena</code> |
+              <strong>Saldo inicial:</strong> $1000
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+      <div class="container">
+        <p class="mb-2">🛡️ Demo CSRF - Las 3 Defensas Fundamentales</p>
+        <small>Desarrollo Seguro 2025 - Proyecto Educativo Local</small>
+      </div>
+    </footer>
+  </body>
+</html>

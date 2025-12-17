@@ -1,0 +1,4 @@
+{
+  "ana": { "password": "contrasena", "balance": 1000 },
+  "carlos": { "password": "carlospw", "balance": 500 }
+}
