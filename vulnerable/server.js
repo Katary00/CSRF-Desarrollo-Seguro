@@ -7,6 +7,7 @@ const fs = require("fs");
 
 const app = express();
 const ARCHIVO_USUARIOS = path.join(__dirname, "usuarios.json");
+const intentos = [];
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,6 +36,23 @@ function guardarUsuarios(usuarios) {
   fs.writeFileSync(ARCHIVO_USUARIOS, JSON.stringify(usuarios, null, 2));
 }
 let usuarios = cargarUsuarios();
+
+function registrarIntento(req, detalles) {
+  intentos.unshift({
+    ts: new Date().toISOString(),
+    ip: req.ip,
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin || null,
+    referer: req.headers.referer || null,
+    ...detalles,
+  });
+  if (intentos.length > 200) intentos.pop();
+}
+
+app.get("/intentos.json", (req, res) => {
+  res.json({ total: intentos.length, intentos });
+});
 
 function requiereAutenticacion(req, res, next) {
   if (!req.session || !req.session.usuario) {
@@ -152,6 +170,14 @@ app.get("/cuenta", (req, res) => {
       </div>
       <div class="col-md-6">
         <div class="alert alert-info">Esta aplicación es vulnerable a CSRF. Pruebe abrir la página atacante en otra pestaña y haga la demostración.</div>
+        <div class="card mt-3">
+          <div class="card-body">
+            <h6 class="mb-2">📈 Intentos recientes (vulnerable)</h6>
+            <p class="small mb-2">Total: ${intentos.length}</p>
+            <a href="/intentos.json" target="_blank" class="btn btn-sm btn-outline-secondary">Ver detalles (JSON)</a>
+            <p class="small text-muted mb-0 mt-2">Si no ves la petición en DevTools, revisa aquí o activa "Preserve log" en Network.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -167,10 +193,23 @@ app.post("/transferencia", requiereAutenticacion, (req, res) => {
     usuarios[usuario].balance -= monto;
     guardarUsuarios(usuarios);
     console.log(`Transferido $${monto} desde ${usuario} a ${destino}`);
+    registrarIntento(req, {
+      permitido: true,
+      motivo: "POST transferencia procesada (sin protección CSRF)",
+      monto,
+      destino,
+    });
     return res.send(
       `Transferido $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
     );
   }
+  registrarIntento(req, {
+    permitido: false,
+    motivo:
+      "POST transferencia rechazada (saldo insuficiente o monto inválido)",
+    monto,
+    destino,
+  });
   res.status(400).send("Transferencia inválida");
 });
 
@@ -185,10 +224,22 @@ app.get("/donar", (req, res) => {
     usuarios[usuario].balance -= monto;
     guardarUsuarios(usuarios);
     console.log(`(donar GET) ${usuario} -> ${destino} $${monto}`);
+    registrarIntento(req, {
+      permitido: true,
+      motivo: "GET vulnerable cambió estado",
+      monto,
+      destino,
+    });
     return res.send(
       `Donado $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
     );
   }
+  registrarIntento(req, {
+    permitido: false,
+    motivo: "GET vulnerable rechazado (saldo insuficiente o monto inválido)",
+    monto,
+    destino,
+  });
   res.status(400).send("Donación inválida");
 });
 

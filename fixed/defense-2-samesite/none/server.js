@@ -1,4 +1,6 @@
 const express = require("express");
+const https = require("https");
+const selfsigned = require("selfsigned");
 const session = require("express-session");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
@@ -7,6 +9,7 @@ const fs = require("fs");
 
 const app = express();
 const ARCHIVO_USUARIOS = path.join(__dirname, "usuarios.json");
+const intentos = [];
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -18,9 +21,9 @@ app.use(
     saveUninitialized: true,
     // ⚠️ DEFENSA 2C: SameSite=None (Sin protección)
     // Las cookies se envían en TODAS las peticiones cross-site
-    // REQUIERE secure: true (HTTPS) en producción
+    // REQUIERE secure: true (HTTPS). En la demo local servimos por HTTPS con certificado autogenerado.
     cookie: {
-      secure: false, // En producción DEBE ser true
+      secure: true,
       sameSite: "none",
     },
   })
@@ -39,6 +42,23 @@ function guardarUsuarios(usuarios) {
   fs.writeFileSync(ARCHIVO_USUARIOS, JSON.stringify(usuarios, null, 2));
 }
 let usuarios = cargarUsuarios();
+
+function registrarIntento(req, detalles) {
+  intentos.unshift({
+    ts: new Date().toISOString(),
+    ip: req.ip,
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin || null,
+    referer: req.headers.referer || null,
+    ...detalles,
+  });
+  if (intentos.length > 100) intentos.pop();
+}
+
+app.get("/intentos.json", (req, res) => {
+  res.json({ total: intentos.length, intentos });
+});
 
 app.get("/iniciar-sesion", (req, res) => {
   res.send(`<!doctype html>
@@ -82,6 +102,17 @@ app.get("/iniciar-sesion", (req, res) => {
               <li><strong>Caso de uso:</strong> Widgets embebidos, SSO, APIs cross-domain</li>
               <li><strong>⚠️ Debe combinarse con tokens CSRF</strong> para seguridad</li>
             </ul>
+            <hr>
+            <h6 class="mt-3">⚙️ Configuración de cookie (Express)</h6>
+            <pre class="bg-light p-3 rounded small">session({
+  cookie: { sameSite: "none", secure: true }
+})</pre>
+            <h6>🧭 Flujo</h6>
+            <ol class="small mb-0">
+              <li>Usuario inicia sesión → cookie (SameSite=None, Secure) en HTTPS</li>
+              <li>Formulario POST externo: cookie SÍ se envía</li>
+              <li>Servidor procesa como autenticado → ataque tiene éxito si no hay token CSRF</li>
+            </ol>
           </div>
         </div>
       </div>
@@ -170,6 +201,13 @@ app.get("/cuenta", (req, res) => {
         <div class="alert alert-info">
           <p class="small mb-0"><strong>Cuándo usar:</strong> Widgets embebidos, SSO, OAuth. <strong>Siempre con tokens CSRF adicionales.</strong></p>
         </div>
+        <div class="card mt-3">
+          <div class="card-body">
+            <h6 class="mb-2">📈 Intentos recientes</h6>
+            <p class="small mb-2">Total: ${intentos.length}</p>
+            <a href="/intentos.json" target="_blank" class="btn btn-sm btn-outline-secondary">Ver detalles (JSON)</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -178,8 +216,13 @@ app.get("/cuenta", (req, res) => {
 });
 
 app.post("/transferencia", (req, res) => {
-  if (!req.session || !req.session.usuario)
+  if (!req.session || !req.session.usuario) {
+    registrarIntento(req, {
+      permitido: false,
+      motivo: "Sin sesión",
+    });
     return res.status(401).send("No ha iniciado sesión");
+  }
   const usuario = req.session.usuario;
   const monto = Number(req.body.monto || 0);
   const destino = req.body.destino || "desconocido";
@@ -189,6 +232,10 @@ app.post("/transferencia", (req, res) => {
     console.log(
       `⚠️ [None] Transferencia (vulnerable): $${monto} desde ${usuario} a ${destino}`
     );
+    registrarIntento(req, {
+      permitido: true,
+      motivo: "CSRF permitido: SameSite=None envía cookie en POST",
+    });
     return res.send(
       `✅ Transferido $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
     );
@@ -209,6 +256,10 @@ app.get("/donar", (req, res) => {
     console.log(
       `⚠️ [None/GET] Donación vulnerable: ${usuario} -> ${destino} $${monto}`
     );
+    registrarIntento(req, {
+      permitido: true,
+      motivo: "GET vulnerable: estado cambiado sin protección",
+    });
     return res.send(
       `Donado $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
     );
@@ -218,8 +269,13 @@ app.get("/donar", (req, res) => {
 
 app.get("/", (req, res) => res.redirect("/cuenta"));
 
-app.listen(3022, () =>
+// Servidor HTTPS local con certificado autogenerado
+const attrs = [{ name: "commonName", value: "localhost" }];
+const pems = selfsigned.generate(attrs, { days: 365, keySize: 2048 });
+const server = https.createServer({ key: pems.private, cert: pems.cert }, app);
+
+server.listen(3022, () =>
   console.log(
-    "⚠️ Defensa 2C (SameSite=None - VULNERABLE) escuchando en http://localhost:3022"
+    "⚠️ Defensa 2C (SameSite=None - VULNERABLE) escuchando en https://localhost:3022"
   )
 );

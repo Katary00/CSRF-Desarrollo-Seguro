@@ -7,6 +7,7 @@ const fs = require("fs");
 
 const app = express();
 const ARCHIVO_USUARIOS = path.join(__dirname, "usuarios.json");
+const intentos = [];
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -38,6 +39,23 @@ function guardarUsuarios(usuarios) {
   fs.writeFileSync(ARCHIVO_USUARIOS, JSON.stringify(usuarios, null, 2));
 }
 let usuarios = cargarUsuarios();
+
+function registrarIntento(req, detalles) {
+  intentos.unshift({
+    ts: new Date().toISOString(),
+    ip: req.ip,
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin || null,
+    referer: req.headers.referer || null,
+    ...detalles,
+  });
+  if (intentos.length > 100) intentos.pop();
+}
+
+app.get("/intentos.json", (req, res) => {
+  res.json({ total: intentos.length, intentos });
+});
 
 app.get("/iniciar-sesion", (req, res) => {
   res.send(`<!doctype html>
@@ -80,6 +98,17 @@ app.get("/iniciar-sesion", (req, res) => {
               <li><strong>Ejemplo:</strong> Si recibes un email con un enlace a este sitio, llegarás sin sesión iniciada</li>
               <li><strong>Uso ideal:</strong> Aplicaciones muy sensibles (bancos, sistemas críticos)</li>
             </ul>
+            <hr>
+            <h6 class="mt-3">⚙️ Configuración de cookie (Express)</h6>
+            <pre class="bg-light p-3 rounded small">session({
+  cookie: { sameSite: "strict", secure: false }
+})</pre>
+            <h6>🧭 Flujo</h6>
+            <ol class="small mb-0">
+              <li>Usuario inicia sesión → cookie de sesión creada (SameSite=Strict)</li>
+              <li>Un sitio externo intenta enviar POST → navegador NO envía cookie</li>
+              <li>Servidor no reconoce sesión → petición rechazada</li>
+            </ol>
           </div>
         </div>
       </div>
@@ -165,6 +194,13 @@ app.get("/cuenta", (req, res) => {
           <p class="small mb-0"><strong>Prueba:</strong> Intenta atacar desde <a href="http://localhost:3001" target="_blank">localhost:3001</a>. 
           El ataque fallará porque el navegador no enviará la cookie.</p>
         </div>
+        <div class="card mt-3">
+          <div class="card-body">
+            <h6 class="mb-2">📈 Intentos recientes</h6>
+            <p class="small mb-2">Total: ${intentos.length}</p>
+            <a href="/intentos.json" target="_blank" class="btn btn-sm btn-outline-secondary">Ver detalles (JSON)</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -173,8 +209,13 @@ app.get("/cuenta", (req, res) => {
 });
 
 app.post("/transferencia", (req, res) => {
-  if (!req.session || !req.session.usuario)
+  if (!req.session || !req.session.usuario) {
+    registrarIntento(req, {
+      permitido: false,
+      motivo: "Sin sesión: cookie no enviada por SameSite=Strict",
+    });
     return res.status(401).send("No ha iniciado sesión");
+  }
   const usuario = req.session.usuario;
   const monto = Number(req.body.monto || 0);
   const destino = req.body.destino || "desconocido";
@@ -192,6 +233,10 @@ app.post("/transferencia", (req, res) => {
 });
 
 app.get("/donar", (req, res) => {
+  registrarIntento(req, {
+    permitido: false,
+    motivo: "Intento de cambiar estado via GET bloqueado",
+  });
   res.status(405).send("Método no permitido");
 });
 

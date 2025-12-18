@@ -12,7 +12,8 @@
     "defense:lax": "node fixed/defense-2-samesite/lax/server.js",
     "defense:none": "node fixed/defense-2-samesite/none/server.js",
     "defense:headers": "node fixed/defense-3-headers/server.js",
-    "setup": "npm install"
+    "setup": "npm install",
+    "reset": "node scripts/reset-usuarios.js"
   },
   "author": "",
   "license": "MIT",
@@ -22,6 +23,7 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "body-parser": "^1.20.2",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "selfsigned": "^2.1.1"
   }
 }
