@@ -17,7 +17,7 @@ app.use(
     secret: "demo-samesite-lax",
     resave: false,
     saveUninitialized: true,
-    // ✅ DEFENSA 2B: SameSite=Lax (Protección inteligente)
+    // DEFENSA 2B: SameSite=Lax (Protección inteligente)
     // Permite cookies en navegación GET (enlaces), bloquea POST cross-site
     cookie: {
       secure: false,

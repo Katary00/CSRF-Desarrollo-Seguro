@@ -20,14 +20,14 @@ app.use(
     secret: "demo-token-csrf",
     resave: false,
     saveUninitialized: true,
-    // ✅ Para demostrar correctamente la defensa por TOKEN CSRF
+    // Para demostrar correctamente la defensa por TOKEN CSRF
     // Necesitamos que el navegador ENVÍE la cookie en peticiones cross-site.
     // Por eso usamos SameSite=None + Secure (HTTPS obligatorio).
     cookie: { secure: true, sameSite: "none" },
   })
 );
 
-// ✅ DEFENSA 1: Protección con Token Anti-CSRF
+// DEFENSA 1: Protección con Token Anti-CSRF
 // El servidor genera un token único por sesión
 // El cliente debe incluirlo en cada petición POST
 const csrfProtection = csurf({ cookie: false });
@@ -214,6 +214,11 @@ app.get("/cuenta", csrfProtection, (req, res) => {
 </html>`);
 });
 
+/**
+ * Middleware que requiere autenticación
+ * Si no hay sesión válida, responde con 401
+ * Si hay sesión, continúa con la siguiente función
+ */
 app.post("/transferencia", csrfProtection, (req, res) => {
   if (!req.session || !req.session.usuario) {
     registrarIntento(req, {
@@ -255,7 +260,7 @@ app.get("/donar", (req, res) => {
 
 app.get("/", (req, res) => res.redirect("/cuenta"));
 
-// ✅ Servir por HTTPS (requerido para Secure + SameSite=None)
+// Servir por HTTPS (requerido para Secure + SameSite=None)
 const attrs = [{ name: "commonName", value: "localhost" }];
 const pems = selfsigned.generate(attrs, { days: 365 });
 https
@@ -266,7 +271,7 @@ https
     );
   });
 
-// 🧯 Manejo de errores CSRF para registrar intentos bloqueados
+//  Manejo de errores CSRF para registrar intentos bloqueados
 app.use((err, req, res, next) => {
   // csurf lanza ForbiddenError en ausencia/invalidación de token
   if (err && (err.code === "EBADCSRFTOKEN" || err.message?.includes("csrf"))) {

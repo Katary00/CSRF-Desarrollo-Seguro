@@ -17,7 +17,7 @@ app.use(
     secret: "demo-samesite-strict",
     resave: false,
     saveUninitialized: true,
-    // ✅ DEFENSA 2A: SameSite=Strict (Bloqueo total)
+    // DEFENSA 2A: SameSite=Strict (Bloqueo total)
     // Las cookies NO se envían en NINGUNA petición cross-site
     cookie: {
       secure: false, // En producción debe ser true (HTTPS)

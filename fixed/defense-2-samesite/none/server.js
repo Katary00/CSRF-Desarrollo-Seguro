@@ -19,7 +19,7 @@ app.use(
     secret: "demo-samesite-none",
     resave: false,
     saveUninitialized: true,
-    // ⚠️ DEFENSA 2C: SameSite=None (Sin protección)
+    // DEFENSA 2C: SameSite=None (Sin protección)
     // Las cookies se envían en TODAS las peticiones cross-site
     // REQUIERE secure: true (HTTPS). En la demo local servimos por HTTPS con certificado autogenerado.
     cookie: {

@@ -330,6 +330,11 @@ Cookie: connect.sid=...</pre>
 </html>`);
 });
 
+/**
+ * Muestra la página de cuenta y formulario de transferencia
+ * Solo para usuarios autenticados
+ * 
+ */
 app.post("/transferencia", validarOrigenPeticion, (req, res) => {
   if (!req.session || !req.session.usuario) {
     intentos.unshift({

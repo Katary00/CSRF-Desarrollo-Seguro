@@ -86,6 +86,15 @@ csrf-node-demo/
 
 **Analogía:** Llave secreta que solo tú y el banco conocen. El atacante no puede leerla (Same-Origin Policy).
 
+**Código clave (comentado):**
+
+```js
+app.use(session({ cookie: { sameSite: "none", secure: true } })); // Permite enviar cookie en cross-site (requerido para demo)
+const csrfProtection = csurf(); // Genera y valida token único por sesión
+app.get("/cuenta", csrfProtection, ...); // Inserta el token en el formulario (input hidden)
+app.post("/transferencia", csrfProtection, ...); // Rechaza si falta o es inválido → 403
+```
+
 ---
 
 ### 2️⃣ Defensa 2: Cookies SameSite (Puertos 3020-3022)
@@ -102,6 +111,23 @@ El navegador puede enviar cookies con restricciones según el contexto:
 - **Ejecutar:** `npm run defense:strict`
 - **Documentación:** http://localhost:3020
 
+**Código clave (comentado):**
+
+```js
+app.use(
+  session({
+    cookie: { sameSite: "strict", secure: false }, // NO envía la cookie en ninguna petición cross-site
+  })
+);
+app.post("/transferencia", (req, res) => {
+  if (!req.session?.usuario)
+    return res
+      .status(401)
+      .send("Sin sesión: cookie no viajó (SameSite=Strict)");
+  // Si hay sesión es porque la petición fue same-site; se procesa la transferencia
+});
+```
+
 #### 2B. SameSite=Lax (Puerto 3021) ⚖️ ⭐ **RECOMENDADO**
 
 - **Protección inteligente:**
@@ -112,6 +138,23 @@ El navegador puede enviar cookies con restricciones según el contexto:
 - **Documentación:** http://localhost:3021
 - **Por qué es mejor:** Balance perfecto entre seguridad y experiencia de usuario
 
+**Código clave (comentado):**
+
+```js
+app.use(
+  session({
+    cookie: { sameSite: "lax", secure: false }, // Bloquea POST cross-site, pero mantiene sesión en navegación GET
+  })
+);
+app.post("/transferencia", (req, res) => {
+  if (!req.session?.usuario)
+    return res
+      .status(401)
+      .send("Sin sesión: cookie no viajó en POST cross-site (SameSite=Lax)");
+  // Si hay sesión, la petición fue same-site o navegación permitida; se procesa
+});
+```
+
 #### 2C. SameSite=None (Puerto 3022) ⚠️
 
 - **Sin protección CSRF:** Cookies se envían en TODAS las peticiones
@@ -119,6 +162,17 @@ El navegador puede enviar cookies con restricciones según el contexto:
 - **Caso de uso:** Widgets embebidos, SSO, OAuth (SIEMPRE con tokens CSRF adicionales)
 - **Ejecutar:** `npm run defense:none`
 - **Documentación:** https://localhost:3022
+
+**Código clave (comentado):**
+
+```js
+app.use(
+  session({
+    cookie: { sameSite: "none", secure: true }, // Envía cookies en TODAS las peticiones cross-site (requiere HTTPS)
+  })
+);
+// Sin token CSRF → el atacante puede hacer POST y la cookie sí viaja → vulnerable
+```
 
 **Página comparativa:** http://localhost:3021 (con enlaces a Strict/None)
 
@@ -136,6 +190,27 @@ El navegador puede enviar cookies con restricciones según el contexto:
 - **Ventaja:** Muy intuitivo; no requiere cambios en HTML
 - **Ejecutar:** `npm run defense:headers`
 - **Documentación interactiva:** http://localhost:3030
+
+**Código clave (comentado):**
+
+```js
+function validarOrigenPeticion(req, res, next) {
+  if (!["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) return next();
+  const origin = req.get("Origin");
+  const referer = req.get("Referer");
+  const permitidos = [
+    `http://${req.get("Host")}`,
+    `https://${req.get("Host")}`,
+  ];
+  if (origin && permitidos.includes(origin)) return next(); // Origin coincide → permitido
+  if (referer) {
+    const refOrigin = new URL(referer).origin;
+    if (permitidos.includes(refOrigin)) return next(); // Referer coincide → permitido
+  }
+  return res.status(403).send("Bloqueado: Origin/Referer no autorizado"); // Default: bloquear
+}
+app.use(validarOrigenPeticion);
+```
 
 **Analogía:** Verificar el remitente del sobre antes de procesar la orden.
 
@@ -186,10 +261,15 @@ El navegador puede enviar cookies con restricciones según el contexto:
    ```
 
 3. **Abre en navegador:**
-   - Vulnerable: http://localhost:3000
-   - Atacante: http://localhost:3001
 
-- Defensas: https://localhost:3010, 3020, 3021, 3022, 3030
+| Demo            | Ejecutar                   | Banco (abrir)          | Atacante (abrir)      | Nota                                 |
+| --------------- | -------------------------- | ---------------------- | --------------------- | ------------------------------------ |
+| Vulnerable      | `npm run start:vulnerable` | http://localhost:3000  | http://localhost:3001 |                                      |
+| Token CSRF      | `npm run defense:token`    | https://localhost:3010 | http://localhost:3001 | Acepta certificado HTTPS             |
+| SameSite Strict | `npm run defense:strict`   | http://127.0.0.1:3020  | http://localhost:3001 | Usa 127.0.0.1 para forzar cross-site |
+| SameSite Lax    | `npm run defense:lax`      | http://127.0.0.1:3021  | http://localhost:3001 | Usa 127.0.0.1 para forzar cross-site |
+| SameSite None   | `npm run defense:none`     | https://localhost:3022 | http://localhost:3001 | Acepta certificado HTTPS             |
+| Headers         | `npm run defense:headers`  | http://localhost:3030  | http://localhost:3001 |                                      |
 
 ### Usuarios de prueba
 
