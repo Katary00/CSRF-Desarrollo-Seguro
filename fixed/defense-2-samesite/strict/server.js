@@ -209,21 +209,46 @@ app.get("/cuenta", (req, res) => {
 });
 
 app.post("/transferencia", (req, res) => {
+  console.log(
+    `[Strict] POST /transferencia desde Origin: ${
+      req.headers.origin || "no-origin"
+    }, Referer: ${req.headers.referer || "no-referer"}, Sesión: ${
+      req.session?.usuario || "sin-sesión"
+    }`
+  );
+
   if (!req.session || !req.session.usuario) {
     registrarIntento(req, {
       permitido: false,
-      motivo: "Sin sesión: cookie no enviada por SameSite=Strict",
+      motivo:
+        "Sin sesión: cookie no enviada por SameSite=Strict (petición cross-site bloqueada)",
     });
-    return res.status(401).send("No ha iniciado sesión");
+    console.log(`❌ [Strict] BLOQUEADO: Sin sesión (SameSite=Strict funcionó)`);
+    return res
+      .status(401)
+      .send(
+        "No ha iniciado sesión. La cookie no fue enviada porque SameSite=Strict bloquea peticiones cross-site."
+      );
   }
+
   const usuario = req.session.usuario;
   const monto = Number(req.body.monto || 0);
   const destino = req.body.destino || "desconocido";
+
   if (monto > 0 && usuarios[usuario].balance >= monto) {
     usuarios[usuario].balance -= monto;
     guardarUsuarios(usuarios);
+
+    registrarIntento(req, {
+      permitido: true,
+      motivo:
+        "Transferencia legítima desde same-site (cookie enviada correctamente)",
+      monto,
+      destino,
+    });
+
     console.log(
-      `✅ [Strict] Transferencia: $${monto} desde ${usuario} a ${destino}`
+      `✅ [Strict] Transferencia legítima: $${monto} desde ${usuario} a ${destino}`
     );
     return res.send(
       `✅ Transferido $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
@@ -233,11 +258,22 @@ app.post("/transferencia", (req, res) => {
 });
 
 app.get("/donar", (req, res) => {
+  // Primero verificamos si hay sesión (si la cookie fue enviada)
+  if (!req.session || !req.session.usuario) {
+    registrarIntento(req, {
+      permitido: false,
+      motivo: "GET cross-site bloqueado: SameSite=Strict no envió cookie",
+    });
+    return res
+      .status(401)
+      .send("No ha iniciado sesión (cookie no enviada por SameSite=Strict)");
+  }
+  // Si llegó hasta aquí con sesión, es petición legítima pero GET no debe cambiar estado
   registrarIntento(req, {
     permitido: false,
-    motivo: "Intento de cambiar estado via GET bloqueado",
+    motivo: "GET con sesión rechazado: no se debe cambiar estado con GET",
   });
-  res.status(405).send("Método no permitido");
+  res.status(405).send("Método no permitido. Use POST para cambiar estado.");
 });
 
 app.get("/", (req, res) => res.redirect("/cuenta"));

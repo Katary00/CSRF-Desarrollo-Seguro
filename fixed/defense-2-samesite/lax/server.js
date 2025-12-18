@@ -231,21 +231,48 @@ app.get("/cuenta", (req, res) => {
 });
 
 app.post("/transferencia", (req, res) => {
+  console.log(
+    `[Lax] POST /transferencia desde Origin: ${
+      req.headers.origin || "no-origin"
+    }, Referer: ${req.headers.referer || "no-referer"}, Sesión: ${
+      req.session?.usuario || "sin-sesión"
+    }`
+  );
+
   if (!req.session || !req.session.usuario) {
     registrarIntento(req, {
       permitido: false,
-      motivo: "Sin sesión: cookie no enviada por SameSite=Lax (POST externo)",
+      motivo:
+        "Sin sesión: cookie no enviada por SameSite=Lax (POST cross-site bloqueado)",
     });
-    return res.status(401).send("No ha iniciado sesión");
+    console.log(
+      `❌ [Lax] BLOQUEADO: Sin sesión (SameSite=Lax funcionó en POST cross-site)`
+    );
+    return res
+      .status(401)
+      .send(
+        "No ha iniciado sesión. La cookie no fue enviada porque SameSite=Lax bloquea POST cross-site."
+      );
   }
+
   const usuario = req.session.usuario;
   const monto = Number(req.body.monto || 0);
   const destino = req.body.destino || "desconocido";
+
   if (monto > 0 && usuarios[usuario].balance >= monto) {
     usuarios[usuario].balance -= monto;
     guardarUsuarios(usuarios);
+
+    registrarIntento(req, {
+      permitido: true,
+      motivo:
+        "Transferencia legítima desde same-site (cookie enviada correctamente)",
+      monto,
+      destino,
+    });
+
     console.log(
-      `✅ [Lax] Transferencia: $${monto} desde ${usuario} a ${destino}`
+      `✅ [Lax] Transferencia legítima: $${monto} desde ${usuario} a ${destino}`
     );
     return res.send(
       `✅ Transferido $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
@@ -255,11 +282,23 @@ app.post("/transferencia", (req, res) => {
 });
 
 app.get("/donar", (req, res) => {
+  // Verificamos si hay sesión (si la cookie fue enviada)
+  if (!req.session || !req.session.usuario) {
+    registrarIntento(req, {
+      permitido: false,
+      motivo:
+        "GET desde <img> bloqueado: SameSite=Lax no envió cookie en petición sub-resource",
+    });
+    return res
+      .status(401)
+      .send("No ha iniciado sesión (SameSite=Lax bloqueó cookie en <img>)");
+  }
+  // Si hay sesión (ej: navegación top-level), rechazamos por buenas prácticas
   registrarIntento(req, {
     permitido: false,
-    motivo: "Intento de cambiar estado via GET bloqueado",
+    motivo: "GET con sesión rechazado: no se debe cambiar estado con GET",
   });
-  res.status(405).send("Método no permitido");
+  res.status(405).send("Método no permitido. Use POST para cambiar estado.");
 });
 
 app.get("/", (req, res) => res.redirect("/cuenta"));

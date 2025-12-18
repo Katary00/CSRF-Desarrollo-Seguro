@@ -82,7 +82,7 @@ csrf-node-demo/
   3. En POST → servidor verifica token
   4. Token inválido o ausente → 403 Forbidden
 - **Ejecutar:** `npm run defense:token`
-- **Documentación interactiva:** http://localhost:3010
+- **Documentación interactiva:** https://localhost:3010
 
 **Analogía:** Llave secreta que solo tú y el banco conocen. El atacante no puede leerla (Same-Origin Policy).
 
@@ -188,7 +188,8 @@ El navegador puede enviar cookies con restricciones según el contexto:
 3. **Abre en navegador:**
    - Vulnerable: http://localhost:3000
    - Atacante: http://localhost:3001
-   - Defensas: http://localhost:3010, 3020, 3021, 3022, 3030
+
+- Defensas: https://localhost:3010, 3020, 3021, 3022, 3030
 
 ### Usuarios de prueba
 
@@ -260,11 +261,29 @@ Atacante: Ganó $200
 
 Cada defensa tiene una **página de documentación interactiva** con diagrama, ventajas y código. También puedes **inspeccionar en DevTools** del navegador.
 
+### 🧭 Notas de inspección y página atacante
+
+- **DevTools:** Abre F12 antes del ataque y marca "Preserve log" en la pestaña Network.
+- **HTTPS:** En **Token (3010)** y **None (3022)** acepta el certificado la primera vez.
+- **Página atacante:** Ahora incluye un **selector de objetivo** y envía el ataque a un **iframe oculto**, por lo que la página no navega ni se "cae".
+- **Dónde ver el ataque:** Revisa la pestaña **Network del sitio objetivo** (no la del atacante).
+- **⚠️ IMPORTANTE para SameSite:** Para que funcione correctamente en localhost, **usa diferentes hosts**:
+  - **Banco (Strict/Lax):** Abre en `http://127.0.0.1:3020` (o 3021 para Lax)
+  - **Atacante:** Abre en `http://localhost:3001`
+  - **Razón:** Chrome/Edge tratan `localhost:3001` y `localhost:3020` como "mismo sitio". Usar `127.0.0.1` vs `localhost` fuerza contexto cross-site.
+- **Respaldo:** Si Network no capturó, abre los endpoints de intentos para ver el contador:
+  - Vulnerable: http://localhost:3000/intentos.json
+  - Token CSRF: https://localhost:3010/intentos.json
+  - Strict: http://127.0.0.1:3020/intentos.json ⚠️
+  - Lax: http://127.0.0.1:3021/intentos.json ⚠️
+  - None: https://localhost:3022/intentos.json
+  - Headers: http://localhost:3030/intentos.json
+
 ### 🔍 Defensa 1: Token CSRF
 
 **Verificación en DevTools:**
 
-1. Abre http://localhost:3010 → Inicia sesión
+1. Abre https://localhost:3010 → Acepta el certificado → Inicia sesión
 2. **F12 → Elements (o Inspector)**
 3. **Busca:** Formulario dentro de `<form>`
 4. **Verás:** `<input type="hidden" name="_csrf" value="xyz123..."`
@@ -280,15 +299,17 @@ Cada defensa tiene una **página de documentación interactiva** con diagrama, v
 6. **Status: 403 Forbidden** ← Rechazado por falta de token
 7. **Response:** "ForbiddenError: invalid csrf token"
 
-**Log alternativo:** Open http://localhost:3010/intentos.json para ver todas las peticiones rechazadas.
+**Log alternativo:** Open https://localhost:3010/intentos.json para ver todas las peticiones rechazadas.
 
 ---
 
 ### 🔍 Defensa 2A: SameSite=Strict
 
+**⚠️ Importante:** Para verificar correctamente, abre el banco en `http://127.0.0.1:3020` en lugar de `localhost:3020`, y el atacante en `http://localhost:3001`. Esto asegura que el navegador los trate como sitios diferentes.
+
 **Verificación en DevTools:**
 
-1. Abre http://localhost:3020 → Inicia sesión
+1. Abre **http://127.0.0.1:3020** → Inicia sesión
 2. **F12 → Application (o Storage) → Cookies**
 3. **Busca cookie:** `connect.sid`
 4. **Columna "SameSite":** Verás `Strict` ✅
@@ -297,14 +318,15 @@ Cada defensa tiene una **página de documentación interactiva** con diagrama, v
 **Cómo ver el ataque bloqueado:**
 
 1. DevTools → Pestaña **Network** → **"Preserve log"** activado
-2. Abre http://localhost:3001 (atacante)
-3. Haz clic en "Reclamar premio"
-4. **Vuelve a DevTools de 3020**
-5. **Busca petición POST a `/transferencia`**
-6. **Observación importante:**
+2. Abre **http://localhost:3001** (atacante) en otra pestaña
+3. Selecciona "SameSite Strict (3020)" en el dropdown
+4. Haz clic en "Reclamar premio"
+5. **Vuelve a DevTools de 127.0.0.1:3020**
+6. **Busca petición POST a `/transferencia`**
+7. **Observación importante:**
    - Petición se ENVÍA
    - Pero **sin cookie** (columna "Cookies" en Headers está vacía)
-7. **Status: 401 Unauthorized** (sin sesión válida)
+8. **Status: 401 Unauthorized** (sin sesión válida)
 
 **Lección:** El navegador NO envía la cookie en POST cross-site con SameSite=Strict.
 
@@ -312,23 +334,26 @@ Cada defensa tiene una **página de documentación interactiva** con diagrama, v
 
 ### 🔍 Defensa 2B: SameSite=Lax
 
+**⚠️ Importante:** Para verificar correctamente, abre el banco en `http://127.0.0.1:3021` en lugar de `localhost:3021`, y el atacante en `http://localhost:3001`.
+
 **Verificación en DevTools:**
 
-1. Abre http://localhost:3021 → Inicia sesión
+1. Abre **http://127.0.0.1:3021** → Inicia sesión
 2. **F12 → Application → Cookies → `connect.sid`**
 3. **Columna "SameSite":** Verás `Lax` ✅
 
 **Cómo ver el ataque bloqueado (POST):**
 
 1. DevTools → Network → "Preserve log"
-2. Abre http://localhost:3001 (atacante)
-3. Haz clic en "Reclamar premio"
-4. **En Network de 3021:** Petición POST a `/transferencia`
-5. **Status: 401 Unauthorized** (sin cookie, como Strict)
+2. Abre **http://localhost:3001** (atacante) en otra pestaña
+3. Selecciona "SameSite Lax (3021)" en el dropdown
+4. Haz clic en "Reclamar premio"
+5. **En Network de 127.0.0.1:3021:** Petición POST a `/transferencia`
+6. **Status: 401 Unauthorized** (sin cookie, como Strict)
 
 **DIFERENCIA con Strict (enlace normal):**
 
-- Si alguien te envía un **enlace directo** a http://localhost:3021,
+- Si alguien te envía un **enlace directo** a http://127.0.0.1:3021,
 - Haces clic en él desde email/chat
 - ✅ **SÍ mantiene sesión** (porque es navegación GET de usuario)
 - ❌ **Strict NO mantendría sesión** (incluso en enlaces)
@@ -508,12 +533,17 @@ Cada defensa tiene una **página de documentación interactiva** con diagrama, v
 
 ```
 Ataque vulnerable:        http://localhost:3000 + http://localhost:3001
-Token CSRF (doc):         http://localhost:3010
+Token CSRF (doc):         https://localhost:3010
 SameSite Strict (doc):    http://localhost:3020
 SameSite Lax (doc):       http://localhost:3021
 SameSite None (doc):      https://localhost:3022
 Headers (doc):            http://localhost:3030
-Ver intentos bloqueados:  http://localhost:3000/intentos.json
+Ver intentos (VULNERABLE): http://localhost:3000/intentos.json
+Ver intentos (TOKEN):      https://localhost:3010/intentos.json
+Ver intentos (STRICT):     http://localhost:3020/intentos.json
+Ver intentos (LAX):        http://localhost:3021/intentos.json
+Ver intentos (NONE):       https://localhost:3022/intentos.json
+Ver intentos (HEADERS):    http://localhost:3030/intentos.json
 ```
 
 ---

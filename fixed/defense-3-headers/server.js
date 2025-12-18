@@ -6,6 +6,7 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
+const intentos = [];
 const ARCHIVO_USUARIOS = path.join(__dirname, "usuarios.json");
 
 app.use(cookieParser());
@@ -50,6 +51,16 @@ function validarOrigenPeticion(req, res, next) {
       return next();
     } else {
       console.log(`  ❌ Origin rechazado: ${origin}`);
+      intentos.unshift({
+        ts: new Date().toISOString(),
+        method: req.method,
+        path: req.path,
+        origin: origin || null,
+        referer: referer || null,
+        permitido: false,
+        motivo: "Origin no autorizado",
+      });
+      if (intentos.length > 200) intentos.pop();
       return res.status(403).send(`
         <h2>🚫 Petición bloqueada por CSRF</h2>
         <p><strong>Razón:</strong> El origen de la petición no está autorizado.</p>
@@ -75,6 +86,16 @@ function validarOrigenPeticion(req, res, next) {
         return next();
       } else {
         console.log(`  ❌ Referer rechazado: ${refererOrigin}`);
+        intentos.unshift({
+          ts: new Date().toISOString(),
+          method: req.method,
+          path: req.path,
+          origin: origin || null,
+          referer: refererOrigin,
+          permitido: false,
+          motivo: "Referer no autorizado",
+        });
+        if (intentos.length > 200) intentos.pop();
         return res.status(403).send(`
           <h2>🚫 Petición bloqueada por CSRF</h2>
           <p><strong>Razón:</strong> El referer de la petición no está autorizado.</p>
@@ -88,12 +109,32 @@ function validarOrigenPeticion(req, res, next) {
       }
     } catch (e) {
       console.log(`  ❌ Referer inválido: ${referer}`);
+      intentos.unshift({
+        ts: new Date().toISOString(),
+        method: req.method,
+        path: req.path,
+        origin: origin || null,
+        referer: referer || null,
+        permitido: false,
+        motivo: "Referer inválido",
+      });
+      if (intentos.length > 200) intentos.pop();
       return res.status(403).send("Referer inválido");
     }
   }
 
   // Si no hay ni Origin ni Referer, rechazamos por seguridad
   console.log("  ❌ No hay Origin ni Referer en la petición");
+  intentos.unshift({
+    ts: new Date().toISOString(),
+    method: req.method,
+    path: req.path,
+    origin: origin || null,
+    referer: referer || null,
+    permitido: false,
+    motivo: "Sin Origin/Referer",
+  });
+  if (intentos.length > 200) intentos.pop();
   return res.status(403).send(`
     <h2>🚫 Petición bloqueada</h2>
     <p><strong>Razón:</strong> No se detectaron cabeceras Origin ni Referer.</p>
@@ -114,6 +155,10 @@ function guardarUsuarios(usuarios) {
   fs.writeFileSync(ARCHIVO_USUARIOS, JSON.stringify(usuarios, null, 2));
 }
 let usuarios = cargarUsuarios();
+
+app.get("/intentos.json", (req, res) => {
+  res.json({ total: intentos.length, intentos });
+});
 
 app.get("/iniciar-sesion", (req, res) => {
   res.send(`<!doctype html>
@@ -249,6 +294,13 @@ app.get("/cuenta", (req, res) => {
           <p class="small mb-0"><strong>Prueba:</strong> El ataque desde <a href="http://localhost:3001" target="_blank">localhost:3001</a> 
           será <strong>bloqueado</strong> porque el Origin será diferente.</p>
         </div>
+        <div class="card mt-3">
+          <div class="card-body">
+            <h6 class="mb-2">📈 Intentos recientes</h6>
+            <p class="small mb-2">Total: ${intentos.length}</p>
+            <a href="/intentos.json" target="_blank" class="btn btn-sm btn-outline-secondary">Ver detalles (JSON)</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -279,8 +331,19 @@ Cookie: connect.sid=...</pre>
 });
 
 app.post("/transferencia", validarOrigenPeticion, (req, res) => {
-  if (!req.session || !req.session.usuario)
+  if (!req.session || !req.session.usuario) {
+    intentos.unshift({
+      ts: new Date().toISOString(),
+      method: req.method,
+      path: req.path,
+      origin: req.headers.origin || null,
+      referer: req.headers.referer || null,
+      permitido: false,
+      motivo: "Sin sesión",
+    });
+    if (intentos.length > 200) intentos.pop();
     return res.status(401).send("No ha iniciado sesión");
+  }
   const usuario = req.session.usuario;
   const monto = Number(req.body.monto || 0);
   const destino = req.body.destino || "desconocido";
@@ -290,6 +353,18 @@ app.post("/transferencia", validarOrigenPeticion, (req, res) => {
     console.log(
       `✅ [Headers] Transferencia validada: $${monto} desde ${usuario} a ${destino}`
     );
+    intentos.unshift({
+      ts: new Date().toISOString(),
+      method: req.method,
+      path: req.path,
+      origin: req.headers.origin || null,
+      referer: req.headers.referer || null,
+      permitido: true,
+      motivo: "Transferencia legítima (origen válido)",
+      monto,
+      destino,
+    });
+    if (intentos.length > 200) intentos.pop();
     return res.send(
       `✅ Transferido $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
     );

@@ -5,8 +5,11 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const csurf = require("csurf");
 const fs = require("fs");
+const https = require("https");
+const selfsigned = require("selfsigned");
 
 const app = express();
+const intentos = [];
 const ARCHIVO_USUARIOS = path.join(__dirname, "usuarios.json");
 
 app.use(cookieParser());
@@ -17,8 +20,10 @@ app.use(
     secret: "demo-token-csrf",
     resave: false,
     saveUninitialized: true,
-    // Sin SameSite para demostrar que el token CSRF es suficiente
-    cookie: { secure: false },
+    // ✅ Para demostrar correctamente la defensa por TOKEN CSRF
+    // Necesitamos que el navegador ENVÍE la cookie en peticiones cross-site.
+    // Por eso usamos SameSite=None + Secure (HTTPS obligatorio).
+    cookie: { secure: true, sameSite: "none" },
   })
 );
 
@@ -26,6 +31,19 @@ app.use(
 // El servidor genera un token único por sesión
 // El cliente debe incluirlo en cada petición POST
 const csrfProtection = csurf({ cookie: false });
+
+function registrarIntento(req, detalles) {
+  intentos.unshift({
+    ts: new Date().toISOString(),
+    ip: req.ip,
+    method: req.method,
+    path: req.path,
+    origin: req.headers.origin || null,
+    referer: req.headers.referer || null,
+    ...detalles,
+  });
+  if (intentos.length > 200) intentos.pop();
+}
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -40,6 +58,10 @@ function guardarUsuarios(usuarios) {
   fs.writeFileSync(ARCHIVO_USUARIOS, JSON.stringify(usuarios, null, 2));
 }
 let usuarios = cargarUsuarios();
+
+app.get("/intentos.json", (req, res) => {
+  res.json({ total: intentos.length, intentos });
+});
 
 app.get("/iniciar-sesion", csrfProtection, (req, res) => {
   res.send(`<!doctype html>
@@ -178,6 +200,13 @@ app.get("/cuenta", csrfProtection, (req, res) => {
           <p class="small mb-0"><strong>Prueba:</strong> Intenta atacar desde <a href="http://localhost:3001" target="_blank">localhost:3001</a>. 
           El ataque fallará porque el atacante no puede obtener el token.</p>
         </div>
+        <div class="card mt-3">
+          <div class="card-body">
+            <h6 class="mb-2">📈 Intentos recientes</h6>
+            <p class="small mb-2">Total: ${intentos.length}</p>
+            <a href="/intentos.json" target="_blank" class="btn btn-sm btn-outline-secondary">Ver detalles (JSON)</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -186,8 +215,13 @@ app.get("/cuenta", csrfProtection, (req, res) => {
 });
 
 app.post("/transferencia", csrfProtection, (req, res) => {
-  if (!req.session || !req.session.usuario)
+  if (!req.session || !req.session.usuario) {
+    registrarIntento(req, {
+      permitido: false,
+      motivo: "Sin sesión (cookie no enviada)",
+    });
     return res.status(401).send("No ha iniciado sesión");
+  }
   const usuario = req.session.usuario;
   const monto = Number(req.body.monto || 0);
   const destino = req.body.destino || "desconocido";
@@ -197,6 +231,12 @@ app.post("/transferencia", csrfProtection, (req, res) => {
     console.log(
       `✅ Transferencia validada con token CSRF: $${monto} desde ${usuario} a ${destino}`
     );
+    registrarIntento(req, {
+      permitido: true,
+      motivo: "Transferencia legítima con token válido",
+      monto,
+      destino,
+    });
     return res.send(
       `✅ Transferido $${monto} a ${destino}. Nuevo saldo: $${usuarios[usuario].balance}`
     );
@@ -206,11 +246,35 @@ app.post("/transferencia", csrfProtection, (req, res) => {
 
 // GET rechazado (no debe cambiar estado)
 app.get("/donar", (req, res) => {
+  registrarIntento(req, {
+    permitido: false,
+    motivo: "Intento de cambiar estado via GET bloqueado",
+  });
   res.status(405).send("Método no permitido. Use POST con token CSRF.");
 });
 
 app.get("/", (req, res) => res.redirect("/cuenta"));
 
-app.listen(3010, () =>
-  console.log("🔐 Defensa 1 (Token CSRF) escuchando en http://localhost:3010")
-);
+// ✅ Servir por HTTPS (requerido para Secure + SameSite=None)
+const attrs = [{ name: "commonName", value: "localhost" }];
+const pems = selfsigned.generate(attrs, { days: 365 });
+https
+  .createServer({ key: pems.private, cert: pems.cert }, app)
+  .listen(3010, () => {
+    console.log(
+      "🔐 Defensa 1 (Token CSRF) escuchando en https://localhost:3010"
+    );
+  });
+
+// 🧯 Manejo de errores CSRF para registrar intentos bloqueados
+app.use((err, req, res, next) => {
+  // csurf lanza ForbiddenError en ausencia/invalidación de token
+  if (err && (err.code === "EBADCSRFTOKEN" || err.message?.includes("csrf"))) {
+    registrarIntento(req, {
+      permitido: false,
+      motivo: "Token CSRF inválido o ausente",
+    });
+    return res.status(403).send("ForbiddenError: invalid csrf token");
+  }
+  next(err);
+});
