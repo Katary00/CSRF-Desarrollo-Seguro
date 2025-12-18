@@ -19,8 +19,9 @@ package-lock.json
 .DS_Store
 Thumbs.db
 
-# Documentation (no subir .md)
+# Documentation (no subir .md excepto README)
 *.md
+!README.md
 !package.json
 
 # Temporary files
