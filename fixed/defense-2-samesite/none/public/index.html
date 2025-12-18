@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensa 2C: SameSite=None</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 80px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">⚠️ Defensa 2C: SameSite=None</h1>
+        <p class="lead">Sin protección CSRF - Requiere defensas adicionales</p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg">Ver cuenta</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="alert alert-danger">
+        <h5>⚠️ Advertencia: Esta configuración es VULNERABLE a CSRF</h5>
+        <p class="mb-0">
+          SameSite=None se usa en esta demo para
+          <strong>mostrar qué NO hacer</strong> sin protección adicional. En
+          producción, <strong>siempre debe combinarse con tokens CSRF</strong>.
+        </p>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">🍪 ¿Qué es?</h5>
+              <p class="card-text">
+                Una configuración de cookie que ordena al navegador
+                <strong>enviar la cookie en TODAS las peticiones</strong>,
+                incluso cross-site. Sin protección CSRF.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">⚙️ ¿Cómo funciona?</h5>
+              <ol class="small mb-0">
+                <li>
+                  Servidor marca: <code>sameSite: "none", secure: true</code>
+                </li>
+                <li>Usuario inicia sesión → cookie guardada</li>
+                <li>Cualquier sitio externo hace petición</li>
+                <li>Navegador: <strong>✅ Envía cookie siempre</strong></li>
+                <li>⚠️ Sin tokens CSRF = vulnerable</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">✅ Usado por</h5>
+              <ul class="small mb-0">
+                <li><strong>Widgets embebidos</strong> en otros sitios</li>
+                <li><strong>Single Sign-On (SSO)</strong></li>
+                <li><strong>OAuth flows</strong></li>
+                <li><strong>APIs cross-domain</strong></li>
+                <li>
+                  <strong>⚠️ SIEMPRE con tokens CSRF adicionales</strong>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5>📊 Diagrama del flujo (Vulnerable)</h5>
+              <div class="bg-white p-3 border rounded">
+                <pre class="mb-0">
+<strong>Escenario: Ataque CSRF exitoso con SameSite=None</strong>
+
+1. Usuario inicia sesión en https://localhost:3022 (banco)
+   ↓
+2. Servidor envía cookie de sesión:
+   Set-Cookie: connect.sid=abc123; SameSite=None; Secure 🔓
+   ↓
+3. Navegador guarda cookie SIN restricciones cross-site
+   ↓
+4. Usuario visita http://localhost:3001 (sitio atacante)
+   ↓
+5. Sitio atacante envía formulario POST a https://localhost:3022/transferencia
+   ↓
+6. <strong>Navegador detecta: "Petición cross-site (3001 → 3022)"</strong>
+   ↓
+7. <strong>Navegador verifica cookie: SameSite=None</strong>
+   ↓
+8. <strong>Navegador decide: ✅ SÍ envío la cookie (None permite todo)</strong>
+   ↓
+9. Servidor recibe petición CON cookie de sesión válida
+   ↓
+10. Servidor: "Sesión válida, procesando..."
+    ↓
+11. <strong>❌ Transferencia procesada - Dinero robado</strong>
+    ↓
+12. 💣 <strong>Ataque exitoso</strong>
+
+<strong>🎯 Por qué el ataque tiene éxito:</strong>
+- SameSite=None permite que la cookie viaje en CUALQUIER petición
+- El servidor confía en la cookie de sesión sin validación adicional
+- No hay token CSRF que verificar
+
+<strong>✅ Solución: Combinar None + Tokens CSRF</strong>
+Si NECESITAS SameSite=None (widgets, SSO), DEBES añadir tokens CSRF:
+- Genera token único por sesión
+- Incluye en cada formulario: &lt;input type="hidden" name="_csrf" value="..." /&gt;
+- Valida token en servidor antes de procesar
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">✅ Casos de uso legítimos</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>Widgets embebidos:</strong> Chat en vivo, mapas,
+                  reproductores de video
+                </li>
+                <li>
+                  <strong>Single Sign-On (SSO):</strong> Login centralizado para
+                  múltiples apps
+                </li>
+                <li>
+                  <strong>OAuth y OpenID Connect:</strong> Flujos de
+                  autenticación cross-domain
+                </li>
+                <li>
+                  <strong>APIs públicas:</strong> Que necesitan cookies en
+                  peticiones cross-origin
+                </li>
+                <li>
+                  <strong>Iframes cross-domain:</strong> Contenido embebido que
+                  requiere sesión
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+              <h6 class="mb-0">❌ Requisitos CRÍTICOS</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>HTTPS obligatorio:</strong> SameSite=None requiere
+                  Secure=true
+                </li>
+                <li>
+                  <strong>Tokens CSRF:</strong> Validación adicional en TODAS
+                  las peticiones que cambian estado
+                </li>
+                <li>
+                  <strong>Validación Origin/Referer:</strong> Doble verificación
+                  del origen
+                </li>
+                <li>
+                  <strong>Rate limiting:</strong> Limitar intentos de ataque
+                </li>
+                <li>
+                  <strong>Logging:</strong> Registrar todas las peticiones
+                  sospechosas
+                </li>
+                <li>
+                  <strong>Nunca usar solo:</strong> Defensa en profundidad
+                  (múltiples capas)
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header bg-warning">
+              <h5 class="mb-0">
+                ⚠️ Tabla de comportamiento: ¿Cuándo envía la cookie?
+              </h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tipo de petición</th>
+                    <th>Ejemplo</th>
+                    <th>¿Cookie enviada?</th>
+                    <th>Riesgo CSRF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Navegación same-site</td>
+                    <td>Clic dentro de localhost:3022</td>
+                    <td>✅ SÍ</td>
+                    <td>🟢 Seguro</td>
+                  </tr>
+                  <tr class="table-warning">
+                    <td>Enlace GET externo</td>
+                    <td>Email con link</td>
+                    <td>✅ SÍ</td>
+                    <td>🟡 Bajo (si GET es seguro)</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Formulario POST cross-site</td>
+                    <td>POST desde localhost:3001</td>
+                    <td>✅ SÍ</td>
+                    <td>🔴 ALTO - VULNERABLE</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Iframe cross-site</td>
+                    <td>Iframe embebido</td>
+                    <td>✅ SÍ</td>
+                    <td>🔴 ALTO - VULNERABLE</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Imagen/script cross-site</td>
+                    <td>&lt;img src="..."&gt;</td>
+                    <td>✅ SÍ</td>
+                    <td>🔴 ALTO - VULNERABLE</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>AJAX/Fetch cross-site</td>
+                    <td>fetch() desde otro dominio</td>
+                    <td>✅ SÍ</td>
+                    <td>🔴 ALTO - VULNERABLE</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info mt-4">
+        <h6>💡 Ejemplo de código (Node.js/Express):</h6>
+        <pre
+          class="bg-white p-3 rounded mb-0"
+        ><code>// ⚠️ Configuración VULNERABLE (sin tokens CSRF)
+app.use(session({
+  secret: "clave-secreta",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: true,     // ✅ HTTPS requerido
+    sameSite: "none"  // ⚠️ Sin protección CSRF
+  }
+}));
+
+// ✅ Configuración SEGURA (con tokens CSRF)
+const csrf = require('csurf');
+const csrfProtection = csrf({ cookie: false });
+
+app.use(session({
+  secret: "clave-secreta",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: true,
+    sameSite: "none"
+  }
+}));
+
+app.post('/transferencia', csrfProtection, (req, res) => {
+  // El middleware csrfProtection valida el token automáticamente
+  // Si no hay token o es inválido → 403 Forbidden
+});</code></pre>
+      </div>
+
+      <div class="alert alert-danger mt-3">
+        <h6>🔴 Demostración de vulnerabilidad en esta app:</h6>
+        <p class="mb-2">
+          Esta demo
+          <strong>NO incluye tokens CSRF intencionalmente</strong> para mostrar
+          el riesgo. Pasos para demostrar el ataque:
+        </p>
+        <ol class="mb-0">
+          <li>Inicia sesión aquí (https://localhost:3022)</li>
+          <li>En otra pestaña, abre http://localhost:3001 (sitio atacante)</li>
+          <li>Haz clic en "Reclamar premio"</li>
+          <li>Vuelve aquí y recarga → <strong>Saldo reducido</strong></li>
+          <li>
+            Verás el ataque registrado en "Intentos recientes" con
+            permitido=true
+          </li>
+        </ol>
+      </div>
+
+      <div class="alert alert-primary mt-3">
+        <h6>🎓 Para tu presentación:</h6>
+        <ul class="mb-0">
+          <li>
+            <strong>Analogía:</strong> SameSite=None es como dejar la puerta
+            abierta; necesitas guardias adicionales (tokens CSRF)
+          </li>
+          <li>
+            Explica <strong>cuándo SÍ usar None</strong>: widgets, SSO, OAuth
+          </li>
+          <li>
+            Demuestra el <strong>ataque exitoso</strong> desde localhost:3001
+          </li>
+          <li>
+            Compara con Lax/Strict: "None permite todo, Lax es inteligente,
+            Strict bloquea todo"
+          </li>
+          <li>
+            Enfatiza: <strong>"None + Tokens CSRF"</strong> es la única opción
+            segura
+          </li>
+          <li>Menciona el requisito de <strong>HTTPS (secure:true)</strong></li>
+        </ul>
+      </div>
+
+      <div class="text-center mt-5">
+        <a href="../public/index.html" class="btn btn-outline-secondary me-2"
+          >← Volver a comparativa SameSite</a
+        >
+        <a href="http://localhost:3001" target="_blank" class="btn btn-danger"
+          >⚠️ Lanzar ataque desde localhost:3001</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

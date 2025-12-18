@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensa 2A: SameSite=Strict</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: white;
+        padding: 80px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">🔒 Defensa 2A: SameSite=Strict</h1>
+        <p class="lead">Bloqueo total - Máxima seguridad</p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg">Ver cuenta</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">🍪 ¿Qué es?</h5>
+              <p class="card-text">
+                Una configuración de cookie que ordena al navegador
+                <strong
+                  >NO enviar la cookie en NINGUNA petición cross-site</strong
+                >. Bloqueo total.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">⚙️ ¿Cómo funciona?</h5>
+              <ol class="small mb-0">
+                <li>Servidor marca cookie: <code>sameSite: "strict"</code></li>
+                <li>Usuario inicia sesión → cookie guardada</li>
+                <li>Sitio externo intenta hacer petición</li>
+                <li>
+                  Navegador: "Es cross-site" → <strong>NO envía cookie</strong>
+                </li>
+                <li>Servidor no reconoce usuario → Rechaza</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">✅ Usado por</h5>
+              <ul class="small mb-0">
+                <li><strong>Bancos</strong> (apps financieras)</li>
+                <li><strong>Sistemas críticos</strong> (salud, gobierno)</li>
+                <li><strong>Aplicaciones de alta seguridad</strong></li>
+                <li><strong>Portales empresariales</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5>📊 Diagrama del flujo</h5>
+              <div class="bg-white p-3 border rounded">
+                <pre class="mb-0">
+<strong>Escenario: Usuario autenticado en localhost:3020 (banco)</strong>
+
+1. Usuario inicia sesión en localhost:3020
+   ↓
+2. Servidor envía cookie de sesión:
+   Set-Cookie: connect.sid=abc123; SameSite=Strict 🔒
+   ↓
+3. Navegador guarda cookie con restricción Strict
+   ↓
+4. Usuario visita localhost:3001 (sitio atacante)
+   ↓
+5. Sitio atacante envía formulario POST a localhost:3020
+   ↓
+6. <strong>Navegador detecta: "Petición cross-site (3001 → 3020)"</strong>
+   ↓
+7. <strong>Navegador verifica cookie: SameSite=Strict</strong>
+   ↓
+8. <strong>Navegador decide: ❌ NO envío la cookie</strong>
+   ↓
+9. Servidor recibe petición SIN cookie de sesión
+   ↓
+10. Servidor: "No hay sesión" → 401 Unauthorized
+    ↓
+11. 🎉 <strong>Ataque bloqueado</strong>
+
+<strong>🎯 Por qué el atacante falla:</strong>
+- El navegador es el guardián: NO envía cookies en peticiones cross-site
+- Sin cookie = sin sesión = sin autorización
+- No requiere código adicional en formularios
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">✅ Ventajas</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li><strong>Protección máxima</strong> contra CSRF</li>
+                <li>
+                  <strong>Una sola línea de código</strong> en el servidor
+                </li>
+                <li><strong>No requiere cambios en HTML</strong></li>
+                <li><strong>Protección automática</strong> del navegador</li>
+                <li>
+                  <strong>No puede ser bypaseado</strong> desde JavaScript
+                </li>
+                <li><strong>Compatible con navegadores modernos</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-warning">
+              <h6 class="mb-0">⚠️ Consideraciones</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>Rompe enlaces externos:</strong> Si recibes un link
+                  por email, llegarás sin sesión iniciada
+                </li>
+                <li>
+                  <strong>UX afectada:</strong> Usuario debe iniciar sesión
+                  nuevamente si viene de otro sitio
+                </li>
+                <li>
+                  <strong>No apto para:</strong> Redes sociales, foros, sitios
+                  colaborativos
+                </li>
+                <li>
+                  <strong>Solo navegadores modernos:</strong> IE11 y anteriores
+                  no lo soportan
+                </li>
+                <li>
+                  <strong>Muy restrictivo</strong> para la mayoría de apps web
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header bg-danger text-white">
+              <h5 class="mb-0">
+                🔒 Tabla de comportamiento: ¿Cuándo envía la cookie?
+              </h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tipo de navegación</th>
+                    <th>Ejemplo</th>
+                    <th>¿Cookie enviada?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Navegación same-site</td>
+                    <td>Clic en enlace dentro de localhost:3020</td>
+                    <td>✅ SÍ</td>
+                  </tr>
+                  <tr>
+                    <td>Formulario same-site</td>
+                    <td>POST desde localhost:3020/cuenta</td>
+                    <td>✅ SÍ</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Enlace externo</td>
+                    <td>Email con link a localhost:3020</td>
+                    <td>❌ NO</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Formulario cross-site</td>
+                    <td>POST desde localhost:3001 (atacante)</td>
+                    <td>❌ NO</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Iframe cross-site</td>
+                    <td>Iframe embebido en otro dominio</td>
+                    <td>❌ NO</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Imagen cross-site</td>
+                    <td>&lt;img src="localhost:3020/donar"&gt;</td>
+                    <td>❌ NO</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info mt-4">
+        <h6>💡 Ejemplo de código (Node.js/Express):</h6>
+        <pre class="bg-white p-3 rounded mb-0"><code>app.use(session({
+  secret: "clave-secreta",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: false,      // En producción: true (requiere HTTPS)
+    sameSite: "strict"  // 🔒 La línea mágica
+  }
+}));</code></pre>
+      </div>
+
+      <div class="alert alert-primary mt-3">
+        <h6>🎓 Para tu presentación:</h6>
+        <ul class="mb-0">
+          <li>
+            <strong>Analogía:</strong> El navegador es un guardián que NO deja
+            pasar las credenciales a sitios externos
+          </li>
+          <li>
+            Demuestra el <strong>problema de UX</strong>: Abre un enlace desde
+            un email → no hay sesión
+          </li>
+          <li>
+            Muestra en DevTools (Application → Cookies) la columna
+            <strong>SameSite=Strict</strong>
+          </li>
+          <li>Explica cuándo SÍ usar Strict: bancos, sistemas críticos</li>
+          <li>
+            Menciona que <strong>Lax es mejor opción</strong> para la mayoría de
+            apps
+          </li>
+        </ul>
+      </div>
+
+      <div class="text-center mt-5">
+        <a href="../public/index.html" class="btn btn-outline-secondary me-2"
+          >← Volver a comparativa SameSite</a
+        >
+        <a href="http://localhost:3001" target="_blank" class="btn btn-danger"
+          >Probar ataque desde localhost:3001</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Defensa 2B: SameSite=Lax</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .hero {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 80px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container text-center">
+        <h1 class="display-4 fw-bold">⚖️ Defensa 2B: SameSite=Lax</h1>
+        <p class="lead">
+          Protección inteligente - El equilibrio perfecto ⭐ RECOMENDADO
+        </p>
+        <div class="mt-4">
+          <a href="/iniciar-sesion" class="btn btn-light btn-lg me-2"
+            >Iniciar sesión</a
+          >
+          <a href="/cuenta" class="btn btn-outline-light btn-lg">Ver cuenta</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">🍪 ¿Qué es?</h5>
+              <p class="card-text">
+                Una configuración de cookie que
+                <strong>permite enlaces GET (navegación)</strong> pero
+                <strong>bloquea formularios POST cross-site</strong>. El mejor
+                balance seguridad/usabilidad.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">⚙️ ¿Cómo funciona?</h5>
+              <ol class="small mb-0">
+                <li>Servidor marca cookie: <code>sameSite: "lax"</code></li>
+                <li>
+                  Navegación GET top-level: <strong>✅ Envía cookie</strong>
+                </li>
+                <li>
+                  POST/iframe/img cross-site:
+                  <strong>❌ NO envía cookie</strong>
+                </li>
+                <li>Ataques CSRF bloqueados, UX intacta</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4 h-100">
+            <div class="card-body">
+              <h5 class="card-title">✅ Usado por</h5>
+              <ul class="small mb-0">
+                <li>
+                  <strong>Chrome y Firefox</strong> (valor por defecto desde
+                  2020)
+                </li>
+                <li><strong>GitHub</strong></li>
+                <li><strong>Google</strong></li>
+                <li><strong>Facebook</strong></li>
+                <li>
+                  <strong>⭐ Recomendado para 95% de apps web</strong>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5>📊 Diagrama del flujo</h5>
+              <div class="bg-white p-3 border rounded">
+                <pre class="mb-0">
+<strong>Escenario 1: Usuario hace clic en enlace de email (GET top-level)</strong>
+
+1. Usuario recibe email con link: https://banco.com/cuenta
+   ↓
+2. Usuario hace clic → Navegador hace GET a banco.com
+   ↓
+3. <strong>Navegador detecta: "Es navegación top-level GET"</strong>
+   ↓
+4. <strong>Navegador verifica cookie: SameSite=Lax</strong>
+   ↓
+5. <strong>Navegador decide: ✅ SÍ envío la cookie (para UX)</strong>
+   ↓
+6. Usuario llega con sesión iniciada
+   ↓
+7. 🎉 <strong>UX perfecta - Sin re-login</strong>
+
+---
+
+<strong>Escenario 2: Sitio atacante intenta CSRF con POST</strong>
+
+1. Usuario autenticado en localhost:3021 (banco)
+   ↓
+2. Usuario visita localhost:3001 (sitio atacante)
+   ↓
+3. Sitio atacante envía formulario POST a localhost:3021/transferencia
+   ↓
+4. <strong>Navegador detecta: "POST cross-site (3001 → 3021)"</strong>
+   ↓
+5. <strong>Navegador verifica cookie: SameSite=Lax</strong>
+   ↓
+6. <strong>Navegador decide: ❌ NO envío la cookie (no es navegación top-level)</strong>
+   ↓
+7. Servidor recibe petición SIN cookie de sesión
+   ↓
+8. Servidor: "No hay sesión" → 401 Unauthorized
+   ↓
+9. 🎉 <strong>Ataque bloqueado</strong>
+
+<strong>🎯 La clave: Lax es inteligente</strong>
+- Permite GET navegación (clic en links) → Buena UX
+- Bloquea POST/iframe cross-site → Seguridad contra CSRF
+- El 99% de ataques CSRF usan POST o GET en iframes/imágenes
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">✅ Ventajas</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>⭐ Valor por defecto</strong> en Chrome/Firefox
+                  modernos
+                </li>
+                <li><strong>Protección contra 99% de ataques CSRF</strong></li>
+                <li><strong>Enlaces externos funcionan</strong> (buena UX)</li>
+                <li><strong>Una sola línea de código</strong></li>
+                <li><strong>No requiere cambios en HTML</strong></li>
+                <li><strong>Compatible con navegadores modernos</strong></li>
+                <li><strong>Mejor balance seguridad/usabilidad</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header bg-warning">
+              <h6 class="mb-0">⚠️ Consideraciones</h6>
+            </div>
+            <div class="card-body">
+              <ul class="mb-0">
+                <li>
+                  <strong>GET vulnerable:</strong> Si tu app cambia estado con
+                  GET (mala práctica), Lax NO protege
+                </li>
+                <li>
+                  <strong>No protege contra subdominios</strong> comprometidos
+                </li>
+                <li>
+                  <strong>Navegadores antiguos:</strong> IE11 y anteriores no lo
+                  soportan
+                </li>
+                <li>
+                  <strong>Mejor combinado con tokens</strong> para defensa en
+                  profundidad
+                </li>
+                <li>
+                  <strong>No protege APIs:</strong> Requiere enfoque diferente
+                  (CORS + tokens)
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">
+                ⚖️ Tabla de comportamiento: ¿Cuándo envía la cookie?
+              </h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tipo de petición</th>
+                    <th>Ejemplo</th>
+                    <th>¿Cookie enviada?</th>
+                    <th>Razón</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Navegación same-site</td>
+                    <td>Clic dentro de localhost:3021</td>
+                    <td>✅ SÍ</td>
+                    <td>Mismo sitio</td>
+                  </tr>
+                  <tr class="table-success">
+                    <td>Enlace GET externo (top-level)</td>
+                    <td>Email con link a localhost:3021</td>
+                    <td>✅ SÍ</td>
+                    <td>Navegación top-level permitida</td>
+                  </tr>
+                  <tr>
+                    <td>Formulario same-site</td>
+                    <td>POST desde localhost:3021/cuenta</td>
+                    <td>✅ SÍ</td>
+                    <td>Mismo sitio</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Formulario POST cross-site</td>
+                    <td>POST desde localhost:3001 (atacante)</td>
+                    <td>❌ NO</td>
+                    <td>No es navegación top-level</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Iframe cross-site</td>
+                    <td>Iframe embebido en otro dominio</td>
+                    <td>❌ NO</td>
+                    <td>No es navegación top-level</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>Imagen/script cross-site</td>
+                    <td>&lt;img src="localhost:3021/donar"&gt;</td>
+                    <td>❌ NO</td>
+                    <td>No es navegación top-level</td>
+                  </tr>
+                  <tr class="table-danger">
+                    <td>AJAX/Fetch cross-site</td>
+                    <td>fetch() desde otro dominio</td>
+                    <td>❌ NO</td>
+                    <td>No es navegación top-level</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info mt-4">
+        <h6>💡 Ejemplo de código (Node.js/Express):</h6>
+        <pre class="bg-white p-3 rounded mb-0"><code>app.use(session({
+  secret: "clave-secreta",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: false,   // En producción: true (requiere HTTPS)
+    sameSite: "lax"  // ⭐ La configuración recomendada
+  }
+}));
+
+// ¡Y listo! No necesitas más código para protección CSRF básica</code></pre>
+      </div>
+
+      <div class="alert alert-success mt-3">
+        <h6>🎯 ¿Por qué Lax es el estándar?</h6>
+        <p class="mb-2">
+          Desde 2020, Chrome y Firefox usan
+          <strong>SameSite=Lax por defecto</strong> en cookies sin configuración
+          explícita. Esto significa que:
+        </p>
+        <ul class="mb-0">
+          <li>
+            Las apps modernas ya tienen protección CSRF básica sin código
+            adicional
+          </li>
+          <li>
+            Los ataques CSRF tradicionales (POST cross-site) fallan por defecto
+          </li>
+          <li>La UX no se ve afectada (enlaces de email funcionan)</li>
+          <li>Es el mejor balance que encontró la industria</li>
+        </ul>
+      </div>
+
+      <div class="alert alert-primary mt-3">
+        <h6>🎓 Para tu presentación:</h6>
+        <ul class="mb-0">
+          <li>
+            <strong>Analogía:</strong> El navegador es un guardián inteligente
+            que permite tráfico legítimo (enlaces) pero bloquea ataques
+            (formularios externos)
+          </li>
+          <li>
+            Explica los <strong>dos escenarios</strong>: email con link (✅) vs
+            ataque POST (❌)
+          </li>
+          <li>
+            Menciona que es el <strong>estándar de Chrome desde 2020</strong>
+          </li>
+          <li>
+            Demuestra que el ataque desde localhost:3001
+            <strong>falla automáticamente</strong>
+          </li>
+          <li>
+            Recomienda <strong>Lax + Tokens</strong> para defensa en profundidad
+          </li>
+        </ul>
+      </div>
+
+      <div class="text-center mt-5">
+        <a href="../public/index.html" class="btn btn-outline-secondary me-2"
+          >← Volver a comparativa SameSite</a
+        >
+        <a href="http://localhost:3001" target="_blank" class="btn btn-danger"
+          >Probar ataque desde localhost:3001</a
+        >
+      </div>
+    </div>
+  </body>
+</html>
